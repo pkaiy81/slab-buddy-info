@@ -1,13 +1,21 @@
 class Utils:
     def display_slabinfo(self, slab_data):
+        """Display slab allocator information.
+
+        Args:
+            slab_data (list): List of dictionaries containing slab information.
+
+        Linux slabinfo example:
+        # name            <active_objs> <num_objs> <objsize> <objperslab> <pagesperslab> : tunables <limit> <batchcount> <sharedfactor> : slabdata <active_slabs> <num_slabs> <sharedavail>
+        ufs_inode_cache        0      0    808   20    4 : tunables    0    0    0 : slabdata      0      0      0
+        qnx4_inode_cache       0      0    680   24    4 : tunables    0    0    0 : slabdata      0      0      0
+        """
         print(
-            "{:<20} {:>10} {:>10} {:>10}".format("Name", "Active", "Total", "ObjSize")
+            f"{'Name':<20} {'Active Objs':>10} {'Num Objs':>10} {'Objsize':>10} {'Objperslab':>10} {'Pagesperslab':>10} {'Limit':>10} {'Batchcount':>10} {'Sharedfactor':>10} {'Active Slabs':>10} {'Num Slabs':>10} {'Sharedavail':>10}"
         )
         for slab in slab_data:
             print(
-                "{:<20} {:>10} {:>10} {:>10}".format(
-                    slab["name"], slab["active_objs"], slab["num_objs"], slab["objsize"]
-                )
+                f"{slab['name']:<20} {slab['active_objs']:>10} {slab['num_objs']:>10} {slab['objsize']:>10} {slab['objperslab']:>10} {slab['pagesperslab']:>10} {slab['limit']:>10} {slab['batchcount']:>10} {slab['sharedfactor']:>10} {slab['active_slabs']:>10} {slab['num_slabs']:>10} {slab['sharedavail']:>10}"
             )
 
     def display_buddyinfo(self, buddy_data):

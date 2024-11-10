@@ -1,5 +1,16 @@
 class BuddyInfo:
-    def __inti__(self, filepath="/proc/buddyinfo"):
+    """Parse /proc/buddyinfo to get buddy allocator information.
+
+    Attributes:
+        filepath (str): The path to the buddyinfo file.
+
+    Linux buddyinfo example:
+    Node 0, zone      DMA      1      0      0      1      2      1      1      0      1      1      3
+    Node 0, zone    DMA32   5625   3348    349    130     76     67     16      7      2      3    389
+    Node 0, zone   Normal    512     88     14     97      9      0     29     36     20      0      0
+    """
+
+    def __init__(self, filepath="/proc/buddyinfo"):
         self.filepath = filepath
 
     def parse_buddyinfo(self):
