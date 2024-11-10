@@ -10,12 +10,40 @@ class Utils:
         ufs_inode_cache        0      0    808   20    4 : tunables    0    0    0 : slabdata      0      0      0
         qnx4_inode_cache       0      0    680   24    4 : tunables    0    0    0 : slabdata      0      0      0
         """
+        header = "{:<20} {:>12} {:>10} {:>8} {:>12} {:>14} {:>10} {:>12} {:>14} {:>14} {:>14} {:>12} {:>12}"
         print(
-            f"{'Name':<20} {'Active Objs':>10} {'Num Objs':>10} {'Objsize':>10} {'Objperslab':>10} {'Pagesperslab':>10} {'Limit':>10} {'Batchcount':>10} {'Sharedfactor':>10} {'Active Slabs':>10} {'Num Slabs':>10} {'Sharedavail':>10}"
+            header.format(
+                "Name",
+                "ActiveObjs",
+                "NumObjs",
+                "ObjSize",
+                "ObjPerSlab",
+                "PagesPerSlab",
+                "Limit",
+                "BatchCount",
+                "SharedFactor",
+                "ActiveSlabs",
+                "NumSlabs",
+                "SharedAvail",
+            )
         )
         for slab in slab_data:
+            row = "{:<20} {:>12} {:>10} {:>8} {:>12} {:>14} {:>10} {:>12} {:>14} {:>14} {:>14} {:>12} {:>12}"
             print(
-                f"{slab['name']:<20} {slab['active_objs']:>10} {slab['num_objs']:>10} {slab['objsize']:>10} {slab['objperslab']:>10} {slab['pagesperslab']:>10} {slab['limit']:>10} {slab['batchcount']:>10} {slab['sharedfactor']:>10} {slab['active_slabs']:>10} {slab['num_slabs']:>10} {slab['sharedavail']:>10}"
+                row.format(
+                    slab["name"],
+                    slab["active_objs"],
+                    slab["num_objs"],
+                    slab["objsize"],
+                    slab["objperslab"],
+                    slab["pagesperslab"],
+                    slab["limit"] if slab["limit"] is not None else "",
+                    slab["batchcount"] if slab["batchcount"] is not None else "",
+                    slab["sharedfactor"] if slab["sharedfactor"] is not None else "",
+                    slab["active_slabs"] if slab["active_slabs"] is not None else "",
+                    slab["num_slabs"] if slab["num_slabs"] is not None else "",
+                    slab["sharedavail"] if slab["sharedavail"] is not None else "",
+                )
             )
 
     def display_buddyinfo(self, buddy_data):
