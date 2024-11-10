@@ -1,8 +1,8 @@
 import argparse
 import time
-from .slabinfo_parser import parse_slabinfo
-from .buddyinfo_parser import parse_buddyinfo
-from .utils import display_slabinfo, display_buddyinfo, text_bar_graph
+from .slabinfo_parser import SlabInfo
+from .buddyinfo_parser import BuddyInfo
+from .utils import Utils
 
 
 def main():
@@ -10,33 +10,49 @@ def main():
         description="Display Linux kernel slab and buddy allocator information."
     )
     parser.add_argument(
-        "--interval", type=int, default=0, help="リアルタイム監視の更新間隔（秒）"
+        "--interval",
+        type=int,
+        default=0,
+        help="Set the update interval in seconds for real-time monitoring.",
     )
     parser.add_argument(
-        "--graph", action="store_true", help="テキストベースのグラフ表示を有効にする"
+        "--graph",
+        action="store_true",
+        help="Enable text-based graph display.",
     )
     parser.add_argument(
-        "--top", type=int, default=10, help="グラフ表示する上位N件のslabを指定"
+        "--top",
+        type=int,
+        default=10,
+        help="Specify the top N slabs to display in the graph.",
     )
     parser.add_argument(
-        "--show-slab", action="store_true", help="slabアロケータ情報のみを表示"
+        "--show-slab",
+        action="store_true",
+        help="Display only slab allocator information.",
     )
     parser.add_argument(
-        "--show-buddy", action="store_true", help="buddyアロケータ情報のみを表示"
+        "--show-buddy",
+        action="store_true",
+        help="Display only buddy allocator information.",
     )
     args = parser.parse_args()
 
     if not args.show_slab and not args.show_buddy:
-        # どちらも指定されていない場合、両方を表示
+        # If neither is specified, display both
         args.show_slab = True
         args.show_buddy = True
+
+    slabinfo = SlabInfo()
+    buddyinfo = BuddyInfo()
+    utils = Utils()
 
     try:
         while True:
             if args.show_slab:
-                slab_data = parse_slabinfo()
+                slab_data = slabinfo.parse_slabinfo()
                 print("\n=== Slab Allocator Information ===")
-                display_slabinfo(slab_data)
+                utils.display_slabinfo(slab_data)
 
                 if args.graph:
                     print("\nSlab Usage Graph:")
@@ -49,21 +65,21 @@ def main():
                     values = [
                         slab["active_objs"] * slab["objsize"] for slab in sorted_slab
                     ]
-                    text_bar_graph(labels, values)
+                    utils.text_bar_graph(labels, values)
 
             if args.show_buddy:
-                buddy_data = parse_buddyinfo()
+                buddy_data = buddyinfo.parse_buddyinfo()
                 print("\n=== Buddy Allocator Information ===")
-                display_buddyinfo(buddy_data)
+                utils.display_buddyinfo(buddy_data)
 
             if args.interval <= 0:
                 break
             else:
                 time.sleep(args.interval)
-                print("\033[H\033[J", end="")  # 画面をクリア
+                print("\033[H\033[J", end="")  # Clear the screen
 
     except KeyboardInterrupt:
-        print("終了します...")
+        print("Exiting...")
 
 
 if __name__ == "__main__":

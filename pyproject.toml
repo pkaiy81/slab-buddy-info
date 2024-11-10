@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slab-buddy-info"
+version = "1.0.0"
+description = "A Python tool to display Linux kernel slab and buddy allocator information."
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.6"
+keywords = ["linux", "slab", "buddy", "allocator", "memory"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/slab-buddy-info"
+
+[tool.setuptools]
+packages = ["slab_buddy_info"]
+
+[tool.setuptools.entry-points.console_scripts]
+slab-buddy-info = "slab_buddy_info.main:main"

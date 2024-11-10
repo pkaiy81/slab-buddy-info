@@ -3,7 +3,7 @@
 import sys
 import os
 
-# Add the current directory to the path
+# Adjust the path to include the current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
