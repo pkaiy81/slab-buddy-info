@@ -9,24 +9,35 @@ class SlabInfo:
     ufs_inode_cache        0      0    808   20    4 : tunables    0    0    0 : slabdata      0      0      0
     qnx4_inode_cache       0      0    680   24    4 : tunables    0    0    0 : slabdata      0      0      0
 
+    The format can vary between different kernel versions.
     """
 
     def __init__(self, filepath="/proc/slabinfo"):
         self.filepath = filepath
 
     def parse_slabinfo(self):
+        """Parse the slabinfo file and return a list of slab information dictionaries."""
         try:
             with open(self.filepath, "r") as f:
-                lines = f.readlines()[2:]  # Skip the first two lines of headers
+                lines = f.readlines()
                 slab_data = []
+                header_found = False
                 for line in lines:
                     line = line.strip()
                     if not line or line.startswith("#"):
                         continue
+
+                    # Detect and skip the header line
+                    if not header_found:
+                        if line.startswith("slabinfo"):
+                            header_found = True
+                        continue
+
                     # Split the line into sections separated by ':'
                     sections = line.split(":")
                     if len(sections) < 3:
                         continue  # Malformed line
+
                     # Parse the first section
                     first_part = sections[0].strip().split()
                     if len(first_part) < 6:

@@ -1,0 +1,187 @@
+
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Slab Usage Over Time</title>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .chart-container {
+                    width: 1000px;
+                    height: 600px;
+                    position: relative;
+                }
+                .legend {
+                    margin-top: 10px;
+                }
+                .legend-item {
+                    display: inline-block;
+                    margin-right: 15px;
+                }
+                .legend-color {
+                    display: inline-block;
+                    width: 12px;
+                    height: 12px;
+                    margin-right: 5px;
+                    vertical-align: middle;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Slab Usage Over Time</h2>
+            <div>
+                Select Slabs:
+                <select id="slabSelect" multiple size="10" onchange="updateChart()">
+                    <option value="inode_cache" selected>inode_cache</option><option value="kernfs_node_cache" selected>kernfs_node_cache</option><option value="ext4_inode_cache" selected>ext4_inode_cache</option><option value="radix_tree_node" selected>radix_tree_node</option><option value="dentry" selected>dentry</option><option value="buffer_head" selected>buffer_head</option><option value="kmalloc-96" selected>kmalloc-96</option><option value="kmalloc-rcl-128" selected>kmalloc-rcl-128</option><option value="kmem_cache" selected>kmem_cache</option><option value="kmalloc-4k" selected>kmalloc-4k</option><option value="ext4_extent_status" selected>ext4_extent_status</option><option value="proc_inode_cache" selected>proc_inode_cache</option><option value="task_struct" selected>task_struct</option><option value="vmap_area" selected>vmap_area</option><option value="vm_area_struct" selected>vm_area_struct</option><option value="kmalloc-rcl-96" selected>kmalloc-rcl-96</option><option value="kmalloc-2k" selected>kmalloc-2k</option><option value="kmalloc-256" selected>kmalloc-256</option><option value="kmalloc-1k" selected>kmalloc-1k</option><option value="filp" selected>filp</option>
+                </select>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartCanvas" width="1000" height="600"></canvas>
+            </div>
+            <div class="legend" id="legend"></div>
+            <script>
+                const timestamps = ['08:56:01', '08:56:03', '08:56:05', '08:56:07', '08:56:09', '08:56:11', '08:56:13', '08:56:15', '08:56:17', '08:56:19', '08:56:21', '08:56:23', '08:56:25', '08:56:27', '08:56:29', '08:56:31', '08:56:33', '08:56:35', '08:56:37', '08:56:39', '08:56:41', '08:56:43', '08:56:45', '08:56:47', '08:56:49', '08:56:51', '08:56:53', '08:56:55', '08:56:57'];
+                const slabData = [{'name': 'inode_cache', 'data': [209517408, 209517408, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024, 209549024]}, {'name': 'kernfs_node_cache', 'data': [195766832, 195766832, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328, 195785328]}, {'name': 'ext4_inode_cache', 'data': [150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040, 150963040]}, {'name': 'radix_tree_node', 'data': [145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128, 145528128]}, {'name': 'dentry', 'data': [118521600, 118525632, 118586496, 118586496, 118580352, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384, 118584384]}, {'name': 'buffer_head', 'data': [99463416, 99463416, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472, 99467472]}, {'name': 'kmalloc-96', 'data': [38309856, 38309856, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576, 38316576]}, {'name': 'kmalloc-rcl-128', 'data': [32333056, 32333056, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248, 32341248]}, {'name': 'kmem_cache', 'data': [15059968, 15059968, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240, 15066240]}, {'name': 'kmalloc-4k', 'data': [12419072, 12419072, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632, 12357632]}, {'name': 'ext4_extent_status', 'data': [8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120, 8013120]}, {'name': 'proc_inode_cache', 'data': [6904040, 6904040, 6920360, 6920360, 6920360, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6936000, 6846920, 6846920, 6846920, 6846920, 6846920, 6846920, 6846920, 6846920, 6846920]}, {'name': 'task_struct', 'data': [6335360, 6335360, 6341440, 6335360, 6244160, 6244160, 6244160, 6244160, 6244160, 6244160, 6244160, 6244160, 6244160, 6244160, 6244160, 6280640, 6280640, 6304960, 6280640, 6280640, 6262400, 6262400, 6262400, 6262400, 6262400, 6262400, 6262400, 6262400, 6262400]}, {'name': 'vmap_area', 'data': [5879616, 5879616, 5881472, 5881472, 5881472, 5881472, 5882560, 5882560, 5882560, 5882560, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544, 5884544]}, {'name': 'vm_area_struct', 'data': [5262816, 5297760, 5694832, 5670704, 5304416, 5318352, 5300880, 5296928, 5259904, 5259904, 5275712, 5275712, 5265104, 5289024, 5289024, 5240560, 5222256, 5273216, 5300880, 5300880, 5273216, 5273216, 5239936, 5262608, 5262608, 5312736, 5312736, 5296928, 5308784]}, {'name': 'kmalloc-rcl-96', 'data': [4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688, 4958688]}, {'name': 'kmalloc-2k', 'data': [4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248, 4917248]}, {'name': 'kmalloc-256', 'data': [4627456, 4627456, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880, 4634880]}, {'name': 'kmalloc-1k', 'data': [3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120, 3973120]}, {'name': 'filp', 'data': [3689216, 3714304, 3714304, 3714304, 3689472, 3689472, 3709952, 3709696]}];
+                const canvas = document.getElementById('chartCanvas');
+                const ctx = canvas.getContext('2d');
+
+                function getColor(index) {
+                    const colors = ["red", "green", "blue", "orange", "purple", "cyan", "magenta", "yellow", "black", "gray"];
+                    return colors[index % colors.length];
+                }
+
+                function drawAxes(maxUsage) {
+                    const padding = 90;
+                    ctx.strokeStyle = "#000";
+                    ctx.lineWidth = 1;
+                    // Y axis
+                    ctx.beginPath();
+                    ctx.moveTo(padding, padding);
+                    ctx.lineTo(padding, canvas.height - padding);
+                    ctx.stroke();
+                    // X axis
+                    ctx.beginPath();
+                    ctx.moveTo(padding, canvas.height - padding);
+                    ctx.lineTo(canvas.width - padding, canvas.height - padding);
+                    ctx.stroke();
+
+                    // Y axis labels and grid lines
+                    ctx.fillStyle = "#000";
+                    ctx.textAlign = "right";
+                    ctx.textBaseline = "middle";
+                    const ySteps = 10;
+                    for(let i = 0; i <= ySteps; i++) {
+                        let y = padding + (canvas.height - 2 * padding) * i / ySteps;
+                        let value = maxUsage * (1 - i / ySteps);
+                        ctx.beginPath();
+                        ctx.moveTo(padding - 5, y);
+                        ctx.lineTo(padding, y);
+                        ctx.stroke();
+                        ctx.fillText(value.toFixed(0), padding - 15, y); // Adjust label position
+                        // Grid line
+                        ctx.strokeStyle = "#e0e0e0";
+                        ctx.beginPath();
+                        ctx.moveTo(padding, y);
+                        ctx.lineTo(canvas.width - padding, y);
+                        ctx.stroke();
+                        ctx.strokeStyle = "#000";
+                    }
+
+                    // X axis labels and grid lines
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "top";
+                    const xSteps = timestamps.length - 1;
+                    for(let i = 0; i <= xSteps; i++) {
+                        let x = padding + (canvas.width - 2 * padding) * i / xSteps;
+                        if (i % Math.ceil(xSteps / 10) === 0 || i === xSteps) {
+                            ctx.beginPath();
+                            ctx.moveTo(x, canvas.height - padding);
+                            ctx.lineTo(x, canvas.height - padding + 5);
+                            ctx.stroke();
+                            ctx.fillText(timestamps[i], x, canvas.height - padding + 5);
+                        }
+                        // Grid line
+                        ctx.strokeStyle = "#e0e0e0";
+                        ctx.beginPath();
+                        ctx.moveTo(x, padding);
+                        ctx.lineTo(x, canvas.height - padding);
+                        ctx.stroke();
+                        ctx.strokeStyle = "#000";
+                    }
+
+                    // Axis labels
+                    ctx.fillStyle = "#000";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "bottom";
+                    ctx.fillText("Time", canvas.width / 2, canvas.height - 5);
+                    ctx.save();
+                    ctx.translate(padding - 70, canvas.height / 2); // Adjust label position
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.fillText("Memory Usage (Bytes)", 0, 0);
+                    ctx.restore();
+                }
+
+                function drawLine(data, color, maxUsage) {
+                    const padding = 90;
+                    ctx.beginPath();
+                    ctx.strokeStyle = color;
+                    for(let i = 0; i < data.length; i++) {
+                        let x = padding + (canvas.width - 2 * padding) * i / (data.length -1);
+                        let y = padding + (canvas.height - 2 * padding) * (1 - data[i] / maxUsage);
+                        if(i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                }
+
+                function drawChart() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const selectedOptions = Array.from(document.getElementById('slabSelect').selectedOptions);
+                    const selectedNames = selectedOptions.map(option => option.value);
+                    let maxUsage = 0;
+                    for(let slab of slabData) {
+                        if(selectedNames.includes(slab.name)) {
+                            maxUsage = Math.max(maxUsage, ...slab.data, maxUsage);
+                        }
+                    }
+                    if(maxUsage === 0) maxUsage = 1; // Avoid division by zero
+                    else maxUsage *= 1.1;            // Add some padding
+
+                    drawAxes(maxUsage);
+
+                    let colorIndex = 0;
+                    const legend = document.getElementById('legend');
+                    legend.innerHTML = '';
+                    for(let slab of slabData) {
+                        if(selectedNames.includes(slab.name)) {
+                            let color = getColor(colorIndex);
+                            drawLine(slab.data, color, maxUsage);
+                            // Add legend item
+                            let legendItem = document.createElement('div');
+                            legendItem.className = 'legend-item';
+                            legendItem.innerHTML = `<div class='legend-color' style='background-color:${color};'></div>${slab.name}`;
+                            legend.appendChild(legendItem);
+                            colorIndex++;
+                        }
+                    }
+                }
+
+                function updateChart() {
+                    drawChart();
+                }
+
+                // Initial draw
+                // Default to showing all slabs
+                window.onload = function() {
+                    const slabSelect = document.getElementById('slabSelect');
+                    for(let i = 0; i < slabSelect.options.length; i++) {
+                        slabSelect.options[i].selected = true;
+                    }
+                    updateChart();
+                };
+            </script>
+        </body>
+        </html>
+        
