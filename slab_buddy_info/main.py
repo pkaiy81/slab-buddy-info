@@ -3,6 +3,7 @@
 import argparse
 import time
 import curses
+import sys
 from .slabinfo_parser import SlabInfo
 from .buddyinfo_parser import BuddyInfo
 from .utils import Utils
@@ -31,8 +32,7 @@ def main():
     )
     parser.add_argument(
         "--output",
-        choices=["html"],
-        default="html",
+        type=str,
         help="Set the output format for the graph ('html').",
     )
     parser.add_argument(
@@ -41,23 +41,82 @@ def main():
         default="slab_buddy_graph",
         help="Filename to save the graph (without extension).",
     )
+    parser.add_argument(
+        "--count",
+        type=int,
+        help="Set the number of data collections. If specified, the program runs in count mode without displaying the terminal UI.",
+    )
     args = parser.parse_args()
+
+    # Enforce that --output requires --graph
+    if args.output and not args.graph:
+        parser.error("--output requires --graph.")
 
     slabinfo = SlabInfo()
     buddyinfo = BuddyInfo()
     utils = Utils()
 
-    try:
-        curses.wrapper(run_top_interface, slabinfo, buddyinfo, utils, args)
-    except KeyboardInterrupt:
-        print("Exiting...")
+    if args.count:
+        # Run in count mode: collect data without displaying
+        run_count_mode(slabinfo, buddyinfo, utils, args)
+    else:
+        # Run in display mode with curses UI
+        try:
+            curses.wrapper(run_display_mode, slabinfo, buddyinfo, utils, args)
+        except KeyboardInterrupt:
+            print("Exiting...")
 
 
-def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
-    # Initialize curses
+def run_count_mode(slabinfo, buddyinfo, utils, args):
+    time_series_data = {
+        "timestamps": [],
+        "slab_usage": {},  # key: slab name, value: list of usage over time
+    }
+
+    for _ in range(args.count):
+        # Get slab and buddy data
+        slab_data = slabinfo.parse_slabinfo()
+        buddy_data = buddyinfo.parse_buddyinfo()
+
+        if not slab_data:
+            print("Error: Unable to read /proc/slabinfo.")
+            sys.exit(1)
+
+        # Sort slab data by usage
+        slab_data_sorted = sorted(
+            slab_data,
+            key=lambda x: x["active_objs"] * x["objsize"],
+            reverse=True,
+        )[:args.top]
+
+        # Update time-series data
+        timestamp = time.strftime("%H:%M:%S")
+        time_series_data["timestamps"].append(timestamp)
+        for slab in slab_data_sorted:
+            name = slab["name"]
+            usage = slab["active_objs"] * slab["objsize"]
+            if name not in time_series_data["slab_usage"]:
+                time_series_data["slab_usage"][name] = []
+            time_series_data["slab_usage"][name].append(usage)
+
+        # Wait for the interval
+        time.sleep(args.interval)
+
+    # After collecting data, generate graph if requested
+    if args.graph:
+        utils.generate_time_series_graph(
+            time_series_data, filename=args.filename, top_n=args.top
+        )
+        print(f"Graph saved to {args.filename}.html")
+    else:
+        print("No graph generated. Use --graph to generate time-series graphs.")
+
+
+def run_display_mode(stdscr, slabinfo, buddyinfo, utils, args):
+    # Initialize curses colors
     curses.start_color()
     curses.use_default_colors()
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)  # White on black
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)  # Header color
 
     stdscr.nodelay(True)  # Non-blocking input
     interval = args.interval
@@ -72,7 +131,7 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
     while True:
         start_time = time.time()
 
-        # Slab and buddy allocator information
+        # Get slab and buddy data
         slab_data = slabinfo.parse_slabinfo()
         buddy_data = buddyinfo.parse_buddyinfo()
 
@@ -166,13 +225,15 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
         current_line_right = 0
 
         try:
-            # ----------- Left: Summary Information -----------
+            # ----------- Left: Summary Information and Slab Info -----------
+            # Display summary lines
             for line in summary_lines:
                 if current_line_left >= max_y - 2:
                     break  # Stop if we reach the bottom of the screen
                 stdscr.addstr(current_line_left, 0, line[: half_x - 1])
                 current_line_left += 1
 
+            # Slab information header (white background)
             slab_header = "{:<10} {:>10} {:>5} {:>10} {:>10} {:>10} {:>15} {:>30}"
             header_text = slab_header.format(
                 "OBJS",
@@ -190,7 +251,7 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
                 stdscr.attroff(curses.color_pair(1))
                 current_line_left += 1
 
-            # Slab information display (no background color)
+            # Slab information rows (no background color)
             for slab in slab_data_sorted:
                 if current_line_left >= max_y - 2:
                     break  # Stop if we reach the bottom of the screen
@@ -213,6 +274,7 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
                 current_line_left += 1
 
             # ----------- Right: Buddy Allocator Information -----------
+            # Buddy information header (white background)
             buddy_header = "{:<20} {:>10} {:>15}"
             buddy_header_text = buddy_header.format("Node/Zone", "Order", "Free Blocks")
             if current_line_right < max_y - 2:
@@ -223,6 +285,7 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
                 stdscr.attroff(curses.color_pair(1))
                 current_line_right += 1
 
+            # Buddy information rows (no background color)
             for entry in buddy_data:
                 if current_line_right >= max_y - 2:
                     break  # Stop if we reach the bottom of the screen
@@ -236,7 +299,9 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
                 for order, count in enumerate(entry["free_counts"]):
                     if current_line_right >= max_y - 2:
                         break
-                    buddy_row = "{:<20} {:>10} {:>15}".format("", order, count)
+                    buddy_row = "{:<20} {:>10} {:>15}".format(
+                        "", order, count
+                    )
                     stdscr.addstr(
                         current_line_right, half_x, buddy_row[: max_x - half_x - 1]
                     )
@@ -247,19 +312,21 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
                     stdscr.addstr(current_line_right, half_x, "")
                     current_line_right += 1
 
+            # ----------- Exit Instruction -----------
             if max_y - 1 > 0:
                 instruction = "Press 'q' to quit."
                 stdscr.attron(curses.color_pair(1))
-                # stdscr.addstr(max_y - 1, (max_x - len(instruction)) // 2, instruction)
+                # Center the instruction at the bottom
                 stdscr.addstr(max_y - 1, 0, instruction)
                 stdscr.attroff(curses.color_pair(1))
 
             stdscr.refresh()
 
         except curses.error:
+            # Ignore curses errors when trying to write outside the screen
             pass
 
-        # Sleep for the remaining time to maintain the interval
+        # Calculate elapsed time and sleep for the remaining interval
         elapsed_time = time.time() - start_time
         time_to_wait = max(0, interval - elapsed_time)
         try:
@@ -268,11 +335,14 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
             break
 
         # Check for user input
-        key = stdscr.getch()
-        if key == ord("q"):
-            break
+        try:
+            key = stdscr.getch()
+            if key == ord("q"):
+                break  # Exit immediately upon 'q' press
+        except curses.error:
+            pass
 
-    # Generate time series graph
+    # After exiting the loop, generate graph if requested
     if args.graph:
         utils.generate_time_series_graph(
             time_series_data, filename=args.filename, top_n=top_n
@@ -282,3 +352,4 @@ def run_top_interface(stdscr, slabinfo, buddyinfo, utils, args):
 
 if __name__ == "__main__":
     main()
+
