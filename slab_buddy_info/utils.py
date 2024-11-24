@@ -59,20 +59,6 @@ class Utils:
                 print(f"{order:>5} | {count}")
             print()
 
-    def text_bar_graph(self, labels, values, max_width=50):
-        """Display a simple text-based bar graph.
-
-        Args:
-            labels (list): List of labels for the x-axis.
-            values (list): List of values corresponding to each label.
-            max_width (int): Maximum width of the bar graph in characters.
-        """
-        max_value = max(values) if max(values) > 0 else 1
-        for label, value in zip(labels, values):
-            bar_length = int((value / max_value) * max_width)
-            bar = "#" * bar_length
-            print(f"{label:<20} | {bar} ({value})")
-
     def generate_time_series_graph(self, data, filename="slab_buddy_graph", top_n=10):
         """Generate time-series graphs for slab usage and save as an HTML file.
 
@@ -299,72 +285,3 @@ class Utils:
         </html>
         """
         return html
-
-    def prepare_buddy_graph_data(self, buddy_data):
-        """Prepare data for buddy allocator graph.
-
-        Args:
-            buddy_data (list): List of dictionaries containing buddy information.
-
-        Returns:
-            tuple: A tuple containing labels and values for the graph.
-        """
-        labels = []
-        values = []
-        for entry in buddy_data:
-            node_zone = f"Node {entry['node']} Zone {entry['zone']}"
-            for order, count in enumerate(entry["free_counts"]):
-                labels.append(f"{node_zone} Order {order}")
-                values.append(count)
-        return labels, values
-
-    def generate_html_bar_graph(self, labels, values, title="Graph"):
-        """Generate an HTML page with an inline SVG bar graph.
-
-        Args:
-            labels (list): List of labels for the x-axis.
-            values (list): List of values corresponding to each label.
-            title (str): Title of the graph.
-
-        Returns:
-            str: HTML content as a string.
-        """
-        max_value = max(values) if max(values) > 0 else 1
-        width = 800
-        bar_height = 20
-        bar_spacing = 5
-        total_height = (bar_height + bar_spacing) * len(values) + 50
-
-        svg_bars = ""
-        for i, (label, value) in enumerate(zip(labels, values)):
-            bar_length = int((value / max_value) * width)
-            y_position = 50 + i * (bar_height + bar_spacing)
-            svg_bars += f"""
-            <rect x="0" y="{y_position}" width="{bar_length}" height="{bar_height}" fill="steelblue"></rect>
-            <text x="{bar_length + 5}" y="{y_position + bar_height / 2 + 5}" font-size="12">{label} ({value})</text>
-            """
-
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>{title}</title>
-        </head>
-        <body>
-            <h2>{title}</h2>
-            <svg width="{width + 200}" height="{total_height}">
-                {svg_bars}
-            </svg>
-        </body>
-        </html>
-        """
-        return html_content
-
-    def display_html_in_terminal(self, html_content):
-        """Display a message indicating that HTML output cannot be shown in the terminal.
-
-        Args:
-            html_content (str): HTML content (unused in this method).
-        """
-        print("HTML output cannot be displayed in the terminal.")
-        print("Please save the output to a file using the '--save' option.")
